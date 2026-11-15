@@ -8,6 +8,7 @@ module Motor.Tipos
   , Mundo (..)
   , ErrorMundo (..)
   , Comando (..)
+  , Fin (..)
   , Estado (..)
   , renderError
   ) where
@@ -88,11 +89,17 @@ data Comando
   | Salir
   deriving (Eq, Show)
 
+data Fin
+  = Gano
+  | Salio
+  deriving (Eq, Show)
+
 data Estado = Estado
   { estMundo :: Mundo
   , estSala :: Id
   , estInventario :: [Id]
   -- Objetos que están en una sala. Los del inventario no aparecen aquí.
   , estUbicacionObjetos :: Map.Map Id Id
+  , estFin :: Maybe Fin
   }
   deriving (Eq, Show)
