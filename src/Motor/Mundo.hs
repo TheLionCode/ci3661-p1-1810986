@@ -31,6 +31,7 @@ data Cabecera = Cabecera
   { cabTitulo :: String
   , cabInicio :: (Int, Id)
   , cabMeta :: (Int, Meta)
+  , cabTurnos :: Maybe Int
   }
 
 data Pieza
@@ -76,6 +77,7 @@ construir cab piezas =
           [ (sid, Sala sid desc (map snd salidas) (map snd objetos))
           | PiezaSala _ sid desc salidas objetos <- piezas
           ]
+    , mundoTurnos = cabTurnos cab
     }
 
 validar :: Cabecera -> [Pieza] -> [ErrorMundo]
@@ -342,8 +344,8 @@ anclar [] mensaje = errorSinLinea mensaje
 parseCabecera :: [Linea] -> ([ErrorMundo], Maybe Cabecera)
 parseCabecera lineas = (errores, resultado)
   where
-    (mundo, inicio, meta, errs) =
-      foldl aplicar (NoVisto, NoVisto, NoVisto, []) lineas
+    (mundo, inicio, meta, turnos, errs) =
+      foldl aplicar (NoVisto, NoVisto, NoVisto, NoVisto, []) lineas
     errores = reverse errs ++ faltas
     faltas =
       concat
@@ -352,40 +354,48 @@ parseCabecera lineas = (errores, resultado)
         , [anclar lineas "falta el campo META" | esNoVisto meta]
         ]
     resultado =
-      case (mundo, inicio, meta) of
-        (Valido titulo, Valido inicioValor, Valido metaValor)
-          | null errores -> Just (Cabecera titulo inicioValor metaValor)
+      case (mundo, inicio, meta, leerTurnos turnos) of
+        (Valido titulo, Valido inicioValor, Valido metaValor, Just limite)
+          | null errores -> Just (Cabecera titulo inicioValor metaValor limite)
         _ -> Nothing
 
-    aplicar (m, i, mt, es) linea =
+    aplicar (m, i, mt, t, es) linea =
       case partirClave (textoLinea linea) of
         Nothing ->
-          (m, i, mt, errorEn linea "la línea no tiene la forma CLAVE: valor" : es)
+          (m, i, mt, t, errorEn linea "la línea no tiene la forma CLAVE: valor" : es)
         Just ("MUNDO", valor) ->
           case m of
-            NoVisto -> (Valido valor, i, mt, es)
-            _ -> (m, i, mt, errorEn linea "campo MUNDO repetido" : es)
+            NoVisto -> (Valido valor, i, mt, t, es)
+            _ -> (m, i, mt, t, errorEn linea "campo MUNDO repetido" : es)
         Just ("INICIO", valor) ->
           case i of
             NoVisto ->
               case reconocer identificador valor of
-                Just ident -> (m, Valido (numeroLinea linea, ident), mt, es)
+                Just ident -> (m, Valido (numeroLinea linea, ident), mt, t, es)
                 Nothing ->
-                  (m, Invalido, mt, errorEn linea (identInvalido valor) : es)
-            _ -> (m, i, mt, errorEn linea "campo INICIO repetido" : es)
+                  (m, Invalido, mt, t, errorEn linea (identInvalido valor) : es)
+            _ -> (m, i, mt, t, errorEn linea "campo INICIO repetido" : es)
         Just ("META", valor) ->
           case mt of
             NoVisto ->
               case reconocer metaP valor of
-                Just metaValor -> (m, i, Valido (numeroLinea linea, metaValor), es)
+                Just metaValor -> (m, i, Valido (numeroLinea linea, metaValor), t, es)
                 Nothing ->
-                  (m, i, Invalido, errorEn linea (clasificarMeta valor) : es)
-            _ -> (m, i, mt, errorEn linea "campo META repetido" : es)
+                  (m, i, Invalido, t, errorEn linea (clasificarMeta valor) : es)
+            _ -> (m, i, mt, t, errorEn linea "campo META repetido" : es)
+        Just ("TURNOS", valor) ->
+          case t of
+            NoVisto ->
+              case enteroPositivo valor of
+                Just n -> (m, i, mt, Valido n, es)
+                Nothing ->
+                  (m, i, mt, Invalido, errorEn linea "TURNOS debe ser un entero positivo." : es)
+            _ -> (m, i, mt, t, errorEn linea "campo TURNOS repetido" : es)
         Just (clave, _)
           | claveConocida clave ->
-              (m, i, mt, errorEn linea (noPermitida clave "la cabecera") : es)
+              (m, i, mt, t, errorEn linea (noPermitida clave "la cabecera") : es)
           | otherwise ->
-              (m, i, mt, errorEn linea (claveDesconocida clave) : es)
+              (m, i, mt, t, errorEn linea (claveDesconocida clave) : es)
 
 parseBloque :: [Linea] -> ([ErrorMundo], Maybe Pieza)
 parseBloque [] = ([errorSinLinea "bloque vacío"], Nothing)
@@ -507,7 +517,24 @@ esNoVisto (Valido _) = False
 
 claveConocida :: String -> Bool
 claveConocida clave =
-  clave `elem` ["MUNDO", "INICIO", "META", "OBJETO", "DESC", "SALA", "SALIDA"]
+  clave `elem` ["MUNDO", "INICIO", "META", "TURNOS", "OBJETO", "DESC", "SALA", "SALIDA"]
+
+-- NoVisto es un mundo sin límite. Invalido ya dejó un error y no produce valor.
+leerTurnos :: Campo Int -> Maybe (Maybe Int)
+leerTurnos NoVisto = Just Nothing
+leerTurnos Invalido = Nothing
+leerTurnos (Valido n) = Just (Just n)
+
+enteroPositivo :: String -> Maybe Int
+enteroPositivo texto
+  | null texto = Nothing
+  | all esDigito texto =
+      let valor = foldl (\acc c -> acc * 10 + fromEnum c - fromEnum '0') 0 texto
+       in if valor > 0 then Just valor else Nothing
+  | otherwise = Nothing
+
+esDigito :: Char -> Bool
+esDigito c = c >= '0' && c <= '9'
 
 claveDesconocida :: String -> String
 claveDesconocida clave = "clave desconocida \"" ++ clave ++ "\""

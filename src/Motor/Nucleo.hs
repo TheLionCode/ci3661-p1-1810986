@@ -20,6 +20,7 @@ estadoInicial mundo =
                 | sala <- Map.elems (mundoSalas mundo)
                 , obj <- salaObjetos sala
                 ]
+          , estTurnos = mundoTurnos mundo
           , estFin = Nothing
           }
    in if metaCumplida base then base { estFin = Just Gano } else base
@@ -28,10 +29,48 @@ ejecutar :: Comando -> Estado -> ([String], Estado)
 ejecutar _ est | Just _ <- estFin est = ([], est)
 ejecutar (Guardar _) est = ([], est)
 ejecutar (Cargar _) est = ([], est)
-ejecutar comando est =
+ejecutar comando est = cobrar comando (efectuar comando est)
+
+efectuar :: Comando -> Estado -> ([String], Estado)
+efectuar comando est =
   case Map.lookup (estSala est) (mundoSalas (estMundo est)) of
     Nothing -> (["No estás en ninguna sala."], est)
     Just sala -> aplicar comando sala est
+
+-- Ir, tomar, soltar y examinar gastan turno aunque la acción falle.
+-- Ganar en el último turno no se anuncia como tiempo agotado.
+cobrar :: Comando -> ([String], Estado) -> ([String], Estado)
+cobrar comando (mensajes, est)
+  | not (gastaTurno comando) = (mensajes, est)
+  | otherwise =
+      case estTurnos est of
+        Nothing -> (mensajes, est)
+        Just quedan ->
+          let siguientes = quedan - 1
+              base = est { estTurnos = Just (max 0 siguientes) }
+           in case estFin est of
+                Just Gano -> (mensajes, base)
+                _
+                  | siguientes <= 0 ->
+                      ( mensajes ++ ["*** Se acabó el tiempo ***"]
+                      , base { estFin = Just Tiempo }
+                      )
+                  | otherwise ->
+                      ( mensajes ++ ["Turnos restantes: " ++ show siguientes]
+                      , base
+                      )
+
+gastaTurno :: Comando -> Bool
+gastaTurno (Ir _) = True
+gastaTurno (Tomar _) = True
+gastaTurno (Soltar _) = True
+gastaTurno (Examinar _) = True
+gastaTurno Mirar = False
+gastaTurno Inventario = False
+gastaTurno Ayuda = False
+gastaTurno Salir = False
+gastaTurno (Guardar _) = False
+gastaTurno (Cargar _) = False
 
 aplicar :: Comando -> Sala -> Estado -> ([String], Estado)
 aplicar (Ir dir) sala est =

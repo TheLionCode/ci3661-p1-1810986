@@ -11,9 +11,12 @@ library
                   , Motor.Mundo
                   , Motor.Comandos
                   , Motor.Nucleo
+                  , Motor.Persistencia
   hs-source-dirs:   src
   build-depends:    base >=4.15 && <5
                   , containers
+                  , directory
+                  , filepath
   default-language: Haskell2010
   ghc-options:      -Wall
 
@@ -22,6 +25,19 @@ executable aventura
   hs-source-dirs:   app
   build-depends:    base >=4.15 && <5
                   , containers
+                  , aventura
+  default-language: Haskell2010
+  ghc-options:      -Wall
+
+test-suite pruebas
+  type:             exitcode-stdio-1.0
+  main-is:          Pruebas.hs
+  hs-source-dirs:   test
+  build-depends:    base >=4.15 && <5
+                  , containers
+                  , directory
+                  , filepath
+                  , HUnit
                   , aventura
   default-language: Haskell2010
   ghc-options:      -Wall

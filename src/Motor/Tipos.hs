@@ -59,6 +59,8 @@ data Mundo = Mundo
   , mundoMeta :: Meta
   , mundoObjetos :: Map.Map Id Objeto
   , mundoSalas :: Map.Map Id Sala
+  -- Nothing: la partida no tiene límite. Just n: quedan a lo sumo n turnos.
+  , mundoTurnos :: Maybe Int
   }
   deriving (Eq, Show)
 
@@ -92,6 +94,7 @@ data Comando
 data Fin
   = Gano
   | Salio
+  | Tiempo
   deriving (Eq, Show)
 
 data Estado = Estado
@@ -100,6 +103,8 @@ data Estado = Estado
   , estInventario :: [Id]
   -- Objetos que están en una sala. Los del inventario no aparecen aquí.
   , estUbicacionObjetos :: Map.Map Id Id
+  -- Los que quedan. Nothing si el mundo no limita la partida.
+  , estTurnos :: Maybe Int
   , estFin :: Maybe Fin
   }
   deriving (Eq, Show)
