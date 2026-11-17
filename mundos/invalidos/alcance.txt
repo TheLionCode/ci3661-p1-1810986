@@ -1,0 +1,28 @@
+# Errores que debe dar este archivo:
+# - V5: la sala "plaza" tiene dos salidas hacia el norte
+# - V3: la salida lleva a "jardin", que no existe
+# - V4: la salida pide "llave", que no existe
+# - V7: el objeto "moneda" está en más de una sala
+# - V9: la sala "bodega" no se alcanza desde el inicio
+MUNDO: Pasillos cortados
+INICIO: plaza
+META: llegar a plaza
+---
+OBJETO: moneda
+DESC: Una moneda.
+---
+SALA: plaza
+DESC: Una plaza.
+SALIDA: norte -> calle
+SALIDA: norte -> calle
+SALIDA: este -> jardin requiere llave
+OBJETO: moneda
+---
+SALA: calle
+DESC: Una calle.
+SALIDA: sur -> plaza
+OBJETO: moneda
+---
+SALA: bodega
+DESC: Una bodega a la que no entra nadie.
+SALIDA: oeste -> plaza

@@ -1,0 +1,74 @@
+# Mundo propio. Variante Turnos: el guion gana con 9 turnos.
+# Con 8, la misma ruta se queda sin tiempo al tomar el informe.
+
+MUNDO: Cierre del laboratorio
+INICIO: entrada
+META: llevar informe a rectorado
+TURNOS: 9
+---
+OBJETO: carnet
+DESC: Tu carnet. De noche el laboratorio no abre sin él.
+---
+OBJETO: moneda
+DESC: Una moneda en el piso. La máquina de café ya está apagada.
+---
+OBJETO: llave
+DESC: La llave de la azotea, con un papel que dice «no sacar».
+---
+OBJETO: usb
+DESC: Una memoria olvidada entre cables. El informe ya no está aquí.
+---
+OBJETO: informe
+DESC: El informe impreso. La última hoja sigue tibia.
+---
+OBJETO: plano
+DESC: Un plano del edificio. Alguien marcó la azotea con lápiz.
+---
+SALA: entrada
+DESC: El vestíbulo está a oscuras. El torniquete parpadea junto a la puerta.
+SALIDA: norte -> pasillo
+SALIDA: este -> biblioteca
+OBJETO: carnet
+---
+SALA: biblioteca
+DESC: La biblioteca ya cerró. Sobre el mostrador quedó un plano.
+SALIDA: oeste -> entrada
+OBJETO: plano
+---
+SALA: pasillo
+DESC: Luces de emergencia. Al oeste se ve la puerta del laboratorio.
+SALIDA: sur -> entrada
+SALIDA: oeste -> laboratorio requiere carnet
+SALIDA: este -> cafeteria
+SALIDA: norte -> auditorio
+---
+SALA: cafeteria
+DESC: Las sillas están sobre las mesas. Algo brilla bajo una de ellas.
+SALIDA: oeste -> pasillo
+OBJETO: moneda
+---
+SALA: laboratorio
+DESC: Los monitores siguen encendidos. Hay una llave al lado del teclado.
+SALIDA: este -> pasillo
+OBJETO: llave
+---
+SALA: auditorio
+DESC: Butacas vacías. Al fondo, una escalera sube a la azotea.
+SALIDA: sur -> pasillo
+SALIDA: este -> deposito
+SALIDA: arriba -> azotea requiere llave
+---
+SALA: deposito
+DESC: Cajas, cables y una memoria usb. El informe no está entre las cajas.
+SALIDA: oeste -> auditorio
+OBJETO: usb
+---
+SALA: azotea
+DESC: Corre viento. El informe está sujeto con una piedra.
+SALIDA: abajo -> auditorio
+SALIDA: norte -> rectorado
+OBJETO: informe
+---
+SALA: rectorado
+DESC: La antesala del rectorado. Una bandeja espera documentos.
+SALIDA: sur -> azotea

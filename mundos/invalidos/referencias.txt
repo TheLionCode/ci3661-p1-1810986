@@ -1,0 +1,20 @@
+# Errores que debe dar este archivo:
+# - V2: identificador de objeto repetido "gema"
+# - V8: el objeto "perla" no existe
+# - V8: la sala "sotano" no existe
+# - V3: la salida lleva a "torre", que no existe
+# - V6: la sala contiene "escudo", que no está definido
+MUNDO: Referencias rotas
+INICIO: patio
+META: llevar perla a sotano
+---
+OBJETO: gema
+DESC: Una gema.
+---
+OBJETO: gema
+DESC: Otra gema con el mismo nombre.
+---
+SALA: patio
+DESC: Un patio vacío.
+SALIDA: norte -> torre
+OBJETO: escudo

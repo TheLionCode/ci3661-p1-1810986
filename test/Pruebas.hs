@@ -51,6 +51,12 @@ pruebas =
     , "tomar solo no" ~: assertEqual "tomar" Nothing (leerComando "tomar")
     , "TURNOS cero no vale" ~: turnosCero
     , "una partida recuerda sala e inventario" ~: partidaRedonda
+    , "el mundo propio cabe en el enunciado" ~: mundoPropio
+    , "el guion propio gana con 9 turnos" ~: guionPropioGana
+    , "con 8 turnos el mismo guion pierde" ~: guionPropioSinTiempo
+    , "inválido de sintaxis y turnos" ~: cuentaArchivo "mundos/invalidos/sintaxis.txt" 3
+    , "inválido de referencias" ~: cuentaArchivo "mundos/invalidos/referencias.txt" 5
+    , "inválido de alcance" ~: cuentaArchivo "mundos/invalidos/alcance.txt" 5
     ]
 
 tituloEntrega :: IO ()
@@ -176,6 +182,55 @@ partidaRedonda = do
     Right _ -> assertFailure "un archivo ausente no se carga"
   _ <- catchIOError (removeFile ruta) (\_ -> pure ())
   pure ()
+
+mundoPropio :: IO ()
+mundoPropio = do
+  mundo <- exigirMundo "mundos/mundo.txt"
+  let bloqueadas =
+        [ salida
+        | sala <- Map.elems (mundoSalas mundo)
+        , salida <- salaSalidas sala
+        , salidaRequiere salida /= Nothing
+        ]
+  assertBool "al menos 8 salas" (Map.size (mundoSalas mundo) >= 8)
+  assertBool "al menos 6 objetos" (Map.size (mundoObjetos mundo) >= 6)
+  assertEqual "dos salidas bloqueadas" 2 (length bloqueadas)
+  assertEqual "turnos" (Just 9) (mundoTurnos mundo)
+  assertEqual
+    "meta"
+    (LlevarA (Id "informe") (Id "rectorado"))
+    (mundoMeta mundo)
+
+guionPropioGana :: IO ()
+guionPropioGana = do
+  mundo <- exigirMundo "mundos/mundo.txt"
+  lineas <- guionPropio
+  let (est, mensajes) = aplicarLineas (estadoInicial mundo) lineas
+  assertEqual "ganó" (Just Gano) (estFin est)
+  assertBool "victoria" (any (== "*** ¡Has ganado! ***") mensajes)
+
+guionPropioSinTiempo :: IO ()
+guionPropioSinTiempo = do
+  texto <- leerRuta "mundos/mundo.txt"
+  case leerMundo (cambiarTurnos 8 texto) of
+    Left errores -> assertFailure (unlines (map renderError errores))
+    Right mundo -> do
+      lineas <- guionPropio
+      let (est, mensajes) = aplicarLineas (estadoInicial mundo) lineas
+      assertEqual "tiempo" (Just Tiempo) (estFin est)
+      assertBool "no ganó" (not (any (== "*** ¡Has ganado! ***") mensajes))
+
+guionPropio :: IO [String]
+guionPropio = do
+  texto <- leerRuta "guiones/mundo.txt"
+  pure [linea | linea <- lines texto, not (null linea)]
+
+cambiarTurnos :: Int -> String -> String
+cambiarTurnos n = unlines . map linea . lines
+  where
+    linea cruda
+      | take 7 cruda == "TURNOS:" = "TURNOS: " ++ show n
+      | otherwise = cruda
 
 aplicarLineas :: Estado -> [String] -> (Estado, [String])
 aplicarLineas est [] = (est, [])

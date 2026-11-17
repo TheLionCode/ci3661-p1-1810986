@@ -1,0 +1,13 @@
+# Errores que debe dar este archivo (solo sintaxis, V1):
+# - TURNOS no es un entero positivo (variante de turnos)
+# - dirección inexistente "noreste"
+# - clave desconocida "COLOR"
+MUNDO: Mal cerrado
+INICIO: sala
+META: llegar a sala
+TURNOS: cero
+---
+SALA: sala
+DESC: Una sala sin terminar.
+SALIDA: noreste -> sala
+COLOR: azul

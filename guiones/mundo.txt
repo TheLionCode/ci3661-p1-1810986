@@ -1,0 +1,11 @@
+mirar
+tomar carnet
+inventario
+norte
+oeste
+tomar llave
+este
+norte
+arriba
+tomar informe
+norte
